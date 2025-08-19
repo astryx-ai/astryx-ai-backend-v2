@@ -1,0 +1,16 @@
+module.exports = {
+  preset: "ts-jest",
+  testEnvironment: "node",
+  testMatch: ["**/__tests__/**/*.ts", "**/?(*.)+(spec|test).ts"],
+  moduleFileExtensions: ["ts", "js", "json", "node"],
+  transform: {
+    "^.+\\.ts$": [
+      "ts-jest",
+      {
+        tsconfig: "tsconfig.json",
+      },
+    ],
+  },
+  coveragePathIgnorePatterns: ["/node_modules/"],
+  setupFiles: ["<rootDir>/server/__tests__/jest.setup.js"],
+};
