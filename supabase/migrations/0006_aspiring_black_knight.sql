@@ -1,0 +1,2 @@
+ALTER TABLE "stock_prices" ADD COLUMN "company_id" uuid;--> statement-breakpoint
+ALTER TABLE "stock_prices" ADD CONSTRAINT "stock_prices_company_id_companies_id_fk" FOREIGN KEY ("company_id") REFERENCES "public"."companies"("id") ON DELETE cascade ON UPDATE no action;

@@ -19,6 +19,7 @@ export const ENV = {
   AZURE_OPENAI_API_KEY: process.env.AZURE_OPENAI_API_KEY!,
   AZURE_OPENAI_EMBEDDING_DEPLOYMENT:
     process.env.AZURE_OPENAI_EMBEDDING_DEPLOYMENT || "text-embedding-3-small",
+  GRPC_TARGET: process.env.GRPC_TARGET || "localhost:50051",
 } as const;
 
 // Validate required environment variables
@@ -33,6 +34,8 @@ const requiredEnvVars = [
   "TELEGRAM_BOT_TOKEN",
   "AZURE_OPENAI_ENDPOINT",
   "AZURE_OPENAI_API_KEY",
+  "AI_GRPC_TARGET",
+  "GRPC_TARGET",
 ];
 const missingEnvVars = requiredEnvVars.filter(
   (varName) => !process.env[varName]

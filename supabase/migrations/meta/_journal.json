@@ -15,6 +15,41 @@
       "when": 1755639642187,
       "tag": "0001_elite_william_stryker",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1755904555537,
+      "tag": "0002_third_echo",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1755904948641,
+      "tag": "0003_cheerful_wendell_rand",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1755906243148,
+      "tag": "0004_volatile_cerebro",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1755906967181,
+      "tag": "0005_silky_nuke",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1755908659423,
+      "tag": "0006_aspiring_black_knight",
+      "breakpoints": true
     }
   ]
 }

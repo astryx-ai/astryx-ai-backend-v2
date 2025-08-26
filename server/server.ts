@@ -2,6 +2,7 @@ import "./config/env";
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import routes from "./routes/service";
+import grpcRoutes from "./routes/grpc";
 import userRoutes from "./routes/user";
 import whatsappRoutes from "./routes/whatsapp";
 import telegramRoutes from "./routes/telegram";
@@ -21,6 +22,7 @@ app.use("/", routes);
 app.use("/user", verifyToken, userRoutes);
 app.use("/whatsapp", whatsappRoutes);
 app.use("/telegram", telegramRoutes);
+app.use("/grpc", grpcRoutes);
 
 // Welcome route
 app.get("/", (_req: Request, res: Response) => {
