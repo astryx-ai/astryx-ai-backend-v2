@@ -21,7 +21,7 @@ jobs:
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
-          node-version: '22-lts'
+          node-version: "22.x"
 
       - name: Install dependencies and build
         run: |
@@ -60,7 +60,7 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'astryx-ai-backend-v2'
-          slot-name: 'Production'
+          app-name: "astryx-ai-backend-v2"
+          slot-name: "Production"
           package: .
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_FE498D10DCE84D45B7CDC0ABB7386CA3 }}
