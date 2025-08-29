@@ -127,7 +127,8 @@ export const messageStreamAuthorized = async (
     });
 
     try {
-      const url = `${ENV.AI_MICROSERVICE_URL}/agent/stream`;
+      const base = (ENV.AI_MICROSERVICE_URL || "").replace(/\/+$/, "");
+      const url = `${base}/agent/stream`;
       // eslint-disable-next-line no-console
       console.log(`[HTTP] upstream connect: ${url}`);
       const resp = await fetch(url, {
