@@ -1,6 +1,6 @@
 import express from "express";
 import { verifyToken } from "../middleware/auth";
-import { messageStreamAuthorized } from "../controllers/grpcMessage";
+import { messageStreamAuthorized } from "../controllers/streamMessage";
 
 const router = express.Router();
 
