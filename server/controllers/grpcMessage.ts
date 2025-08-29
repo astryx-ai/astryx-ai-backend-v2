@@ -56,6 +56,13 @@ export const messageStreamAuthorized = async (
     }
   }, 15000);
 
+  // Helper to emit SSE events
+  const writeEvent = (data: unknown) => {
+    try {
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    } catch {}
+  };
+
   // Ensure chat exists synchronously (so we can persist reliably and inform client)
   let chatIdToUse = chat_id;
   try {
@@ -110,17 +117,13 @@ export const messageStreamAuthorized = async (
       chat_id: chatIdToUse || "",
     });
   } catch (e: any) {
-    clearInterval(heartbeat);
-    return res
-      .status(500)
-      .json({ success: false, error: String(e?.message || e) });
-  }
-
-  const writeEvent = (data: unknown) => {
     try {
-      res.write(`data: ${JSON.stringify(data)}\n\n`);
+      writeEvent({ error: String(e?.message || e) });
     } catch {}
-  };
+    ended = true;
+    clearInterval(heartbeat);
+    return res.end();
+  }
 
   call.on("metadata", (md: any) => {
     // eslint-disable-next-line no-console

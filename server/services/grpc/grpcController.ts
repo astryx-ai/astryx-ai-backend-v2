@@ -36,9 +36,18 @@ export const messageStream = (req: Request, res: Response) => {
   try {
     call = startMessageStream({ query, user_id, chat_id });
   } catch (e: any) {
-    return res
-      .status(500)
-      .json({ success: false, error: String(e?.message || e) });
+    // gRPC call failed before we created helpers; create minimal helpers now
+    let endedLocal = false;
+    const writeEventLocal = (data: unknown) => {
+      try {
+        res.write(`data: ${JSON.stringify(data)}\n\n`);
+      } catch {}
+    };
+    try {
+      writeEventLocal({ error: String(e?.message || e) });
+    } catch {}
+    endedLocal = true;
+    return res.end();
   }
 
   let ended = false;
