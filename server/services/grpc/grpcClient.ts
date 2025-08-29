@@ -67,5 +67,7 @@ export function messageStream(request: {
   chat_id: string;
 }) {
   const client = getGrpcClient();
-  return client.MessageStream(request);
+  // Add a deadline so connection failures don't hang silently
+  const deadline = new Date(Date.now() + 30000);
+  return client.MessageStream(request, undefined, { deadline });
 }

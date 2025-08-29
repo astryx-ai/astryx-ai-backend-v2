@@ -12,6 +12,8 @@ export const messageStreamAuthorized = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
+  // eslint-disable-next-line no-console
+  console.log("[SSE] /grpc/messages hit");
   const { query, chat_id } = (req.body || {}) as {
     query?: string;
     chat_id?: string;
