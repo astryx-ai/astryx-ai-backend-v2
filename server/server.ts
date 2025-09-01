@@ -2,10 +2,7 @@ import "./config/env";
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import routes from "./routes/service";
-import streamRoutes from "./routes/stream";
 import userRoutes from "./routes/user";
-import whatsappRoutes from "./routes/whatsapp";
-import telegramRoutes from "./routes/telegram";
 import { verifyToken } from "./middleware/auth";
 import { ENV } from "./config/env";
 
@@ -20,9 +17,6 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use("/", routes);
 app.use("/user", verifyToken, userRoutes);
-app.use("/whatsapp", whatsappRoutes);
-app.use("/telegram", telegramRoutes);
-app.use("/stream", streamRoutes);
 
 // Welcome route
 app.get("/", (_req: Request, res: Response) => {

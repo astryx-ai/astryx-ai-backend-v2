@@ -154,45 +154,6 @@ export const updateUserDataController: RequestHandler = async (req, res) => {
   });
 };
 
-// Phone verification controllers
-export const sendPhoneVerificationController: RequestHandler = async (
-  req,
-  res
-) => {
-  const userId = (req as AuthenticatedRequest).user.id;
-
-  await ControllerHelper({
-    res,
-    logMessage: "Send Phone Verification OTP",
-    validationSchema: sendOTPSchema,
-    validationData: req.body,
-    serviceMethod: async (validatedData: { phoneNumber: string }) =>
-      UserService.sendPhoneVerificationOTP(validatedData.phoneNumber, userId),
-    scope: SCOPE.USER,
-  });
-};
-
-export const verifyPhoneController: RequestHandler = async (req, res) => {
-  const userId = (req as AuthenticatedRequest).user.id;
-
-  await ControllerHelper({
-    res,
-    logMessage: "Verify Phone Number",
-    validationSchema: verifyOTPSchema,
-    validationData: req.body,
-    serviceMethod: async (validatedData: {
-      phoneNumber: string;
-      otp: string;
-    }) =>
-      UserService.verifyPhoneAndUpdate(
-        userId,
-        validatedData.phoneNumber,
-        validatedData.otp
-      ),
-    scope: SCOPE.USER,
-  });
-};
-
 export const updateChatController: RequestHandler = async (req, res) => {
   const userId = (req as AuthenticatedRequest).user.id;
   const chatId = req.params.chatId;

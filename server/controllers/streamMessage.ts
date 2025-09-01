@@ -9,7 +9,7 @@ interface AuthenticatedRequest extends Request {
   user?: { id: string };
 }
 
-export const messageStreamAuthorized = async (
+export const addMessageAndStreamResponse = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
@@ -83,15 +83,6 @@ export const messageStreamAuthorized = async (
     console.error("[SSE] failed to ensure chat:", e);
   }
 
-  // Inform client which chat_id is used
-  try {
-    if (chatIdToUse) {
-      res.write(
-        `data: ${JSON.stringify({ meta: { chat_id: chatIdToUse } })}\n\n`
-      );
-    }
-  } catch {}
-
   // Persist user message without blocking the stream
   if (chatIdToUse) {
     (async () => {
@@ -156,7 +147,10 @@ export const messageStreamAuthorized = async (
       let buffer = "";
       let stopEarly = false;
       if (!reader) {
-        writeEvent({ error: "Upstream stream reader unavailable" });
+        writeEvent({
+          event: "error",
+          message: "Upstream stream reader unavailable",
+        });
         ended = true;
         clearInterval(heartbeat);
         return res.end();
@@ -168,27 +162,35 @@ export const messageStreamAuthorized = async (
         buffer += chunkText;
         let idx;
         while ((idx = buffer.indexOf("\n")) !== -1) {
-          const line = buffer.slice(0, idx).trim();
+          const rawLine = buffer.slice(0, idx);
+          const line = rawLine.trim();
           buffer = buffer.slice(idx + 1);
           if (!line) continue;
           try {
-            const obj = JSON.parse(line);
+            // Support upstream SSE lines that begin with 'data: '
+            const jsonString = line.startsWith("data: ")
+              ? line.slice(6).trim()
+              : line;
+            const obj = JSON.parse(jsonString);
             if (obj && typeof obj === "object") {
-              if (obj.text) {
-                writeEvent({
-                  text: obj.text,
-                  end: !!obj.end,
-                  index: obj.index ?? 0,
-                });
-                aiText += obj.text;
-              } else if (obj.end) {
-                // Upstream end marker observed. Do not forward to avoid double end.
-                // Stop reading further and let the unified final end event be emitted below.
+              // Pass-through upstream events as-is
+              if (obj.event === "process") {
+                writeEvent(obj);
+              } else if (obj.event === "token") {
+                writeEvent(obj);
+                if (typeof obj.text === "string") {
+                  aiText += obj.text;
+                }
+              } else if (obj.event === "end") {
+                writeEvent(obj);
                 try {
                   controller.abort();
                 } catch {}
                 stopEarly = true;
                 break;
+              } else {
+                // Unknown event; forward for visibility
+                writeEvent(obj);
               }
             }
           } catch (_e) {
@@ -197,8 +199,8 @@ export const messageStreamAuthorized = async (
         }
         if (stopEarly) break;
       }
+      // Do not emit our own end event; rely on upstream 'event:end'
       if (!ended) {
-        writeEvent({ end: true });
         ended = true;
         res.end();
       }
@@ -226,7 +228,10 @@ export const messageStreamAuthorized = async (
       // eslint-disable-next-line no-console
       console.error("[HTTP] upstream error:", error);
       if (!ended) {
-        writeEvent({ error: String(error?.message || error) });
+        writeEvent({
+          event: "error",
+          message: String(error?.message || error),
+        });
         ended = true;
         res.end();
       }
