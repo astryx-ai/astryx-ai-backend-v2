@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import { ENV } from "../config/env";
 import { createMessage } from "../db/queries/messages";
 import { createNewChat } from "../services/user/chatServices";
+import { extractUrls, fetchSourceMeta } from "../utils/helper";
 import { InsertMessage } from "../db/schema";
 
 interface AuthenticatedRequest extends Request {
@@ -146,6 +147,13 @@ export const addMessageAndStreamResponse = async (
       const decoder = new TextDecoder();
       let buffer = "";
       let stopEarly = false;
+      let sawEndEvent = false as boolean;
+      let endEventObject: any = null as any;
+      let sourcesCollected: Array<{
+        title: string;
+        url: string;
+        ogImageUrl: string | null;
+      }> | null = null;
       if (!reader) {
         writeEvent({
           event: "error",
@@ -182,14 +190,15 @@ export const addMessageAndStreamResponse = async (
                   aiText += obj.text;
                 }
               } else if (obj.event === "end") {
-                writeEvent(obj);
+                // Defer sending end until after sources (if any)
+                sawEndEvent = true;
+                endEventObject = obj;
                 try {
                   controller.abort();
                 } catch {}
                 stopEarly = true;
                 break;
               } else {
-                // Unknown event; forward for visibility
                 writeEvent(obj);
               }
             }
@@ -199,30 +208,57 @@ export const addMessageAndStreamResponse = async (
         }
         if (stopEarly) break;
       }
-      // Do not emit our own end event; rely on upstream 'event:end'
+      // Before ending: if there are URLs in the aggregated AI text, emit a sources event
+      try {
+        if (aiText && aiText.trim()) {
+          const urls = extractUrls(aiText);
+          if (urls && urls.length) {
+            const metas = await Promise.all(
+              urls.map(async (u) => await fetchSourceMeta(u))
+            );
+            const sources = metas.map((m) => ({
+              title: m.title,
+              url: m.url,
+              ogImageUrl: m.ogImageUrl,
+            }));
+            writeEvent({ event: "sources", data: sources });
+            sourcesCollected = sources;
+          }
+        }
+      } catch (_e) {
+        // ignore sources errors; proceed to end
+      }
+
+      // Finally, send the end event (use upstream one if present)
       if (!ended) {
+        try {
+          writeEvent(endEventObject || { event: "end" });
+        } catch {}
         ended = true;
         res.end();
       }
       clearInterval(heartbeat);
       if (chatIdToUse && aiText) {
-        try {
-          const aiMsg: InsertMessage = {
-            chatId: chatIdToUse as string,
-            userId,
-            content: aiText,
-            isAi: true,
-            isWhatsapp: false,
-            isTelegram: false,
-            aiTokensUsed: null as any,
-            aiCost: null as any,
-            aiChartData: null as any,
-          } as InsertMessage;
-          await createMessage(aiMsg);
-        } catch (e) {
-          // eslint-disable-next-line no-console
-          console.error("[SSE] failed to persist AI message:", e);
-        }
+        (async () => {
+          try {
+            const aiMsg: InsertMessage = {
+              chatId: chatIdToUse as string,
+              userId,
+              content: aiText,
+              isAi: true,
+              isWhatsapp: false,
+              isTelegram: false,
+              aiTokensUsed: null as any,
+              aiCost: null as any,
+              aiChartData: null as any,
+              aiResponseSources: sourcesCollected as any,
+            } as InsertMessage;
+            await createMessage(aiMsg);
+          } catch (e) {
+            // eslint-disable-next-line no-console
+            console.error("[SSE] failed to persist AI message:", e);
+          }
+        })();
       }
     } catch (error: any) {
       // eslint-disable-next-line no-console

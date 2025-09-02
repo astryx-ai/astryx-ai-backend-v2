@@ -101,7 +101,7 @@ export const addMessageToChat = async (messageData: InsertMessage) => {
         (aiMessageData as any).aiResponseSources = metas.map((m) => ({
           title: m.title,
           url: m.url,
-          image: m.image,
+          ogImageUrl: m.ogImageUrl,
         }));
       }
 
@@ -111,7 +111,7 @@ export const addMessageToChat = async (messageData: InsertMessage) => {
         aiResponse && (aiResponse as any).aiResponseSources
           ? (aiResponse as any).aiResponseSources
           : urls.length
-          ? urls.map((u) => ({ title: u, url: u, image: null }))
+          ? urls.map((u) => ({ title: u, url: u, ogImageUrl: null }))
           : null;
 
       return {
