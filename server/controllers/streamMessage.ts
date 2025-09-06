@@ -149,11 +149,14 @@ export const addMessageAndStreamResponse = async (
       let stopEarly = false;
       let sawEndEvent = false as boolean;
       let endEventObject: any = null as any;
+      let chartEvents: Array<any> = [];
       let sourcesCollected: Array<{
         title: string;
         url: string;
         ogImageUrl: string | null;
       }> | null = null;
+      // Accumulate SSE data: support multi-line 'data:' per event until a blank line
+      let sseDataBuffer = "";
       if (!reader) {
         writeEvent({
           event: "error",
@@ -171,17 +174,74 @@ export const addMessageAndStreamResponse = async (
         let idx;
         while ((idx = buffer.indexOf("\n")) !== -1) {
           const rawLine = buffer.slice(0, idx);
-          const line = rawLine.trim();
+          // Remove trailing CR if present; do not trim leading spaces for SSE parsing
+          const line = rawLine.replace(/\r$/, "");
           buffer = buffer.slice(idx + 1);
-          if (!line) continue;
+
+          // Comment line in SSE
+          if (line.startsWith(":")) {
+            continue;
+          }
+
+          // SSE data lines: accumulate value until blank line
+          if (line.startsWith("data:")) {
+            const dataPart = line.slice(5).replace(/^\s/, "");
+            sseDataBuffer += dataPart + "\n";
+            continue;
+          }
+
+          // Blank line signifies end of an SSE event: parse accumulated data
+          if (line.trim() === "") {
+            const payload = sseDataBuffer.trim();
+            sseDataBuffer = "";
+            if (!payload) {
+              continue;
+            }
+            try {
+              const obj = JSON.parse(payload);
+              if (obj && typeof obj === "object") {
+                if (obj.event === "process") {
+                  writeEvent(obj);
+                } else if (obj.event === "token") {
+                  writeEvent(obj);
+                  if (typeof obj.text === "string") {
+                    aiText += obj.text;
+                  }
+                } else if (obj.event === "chart_data") {
+                  // Collect chart data while also passing through to client
+                  try {
+                    if (obj.chart) {
+                      chartEvents.push(obj.chart);
+                    } else if (obj.data && obj.type) {
+                      // Fallback: some producers might send the chart directly
+                      chartEvents.push({ ...obj });
+                    }
+                  } catch {}
+                  writeEvent(obj);
+                } else if (obj.event === "end") {
+                  sawEndEvent = true;
+                  endEventObject = obj;
+                  try {
+                    controller.abort();
+                  } catch {}
+                  stopEarly = true;
+                  break;
+                } else {
+                  writeEvent(obj);
+                }
+              }
+            } catch (_e) {
+              // ignore malformed event
+            }
+            continue;
+          }
+
+          // Fallback: if producer sends raw JSON per line (non-SSE strict), try to parse
+          const maybe = line.trim();
+          if (!maybe) continue;
           try {
-            // Support upstream SSE lines that begin with 'data: '
-            const jsonString = line.startsWith("data: ")
-              ? line.slice(6).trim()
-              : line;
-            const obj = JSON.parse(jsonString);
+            const obj = JSON.parse(maybe);
             if (obj && typeof obj === "object") {
-              // Pass-through upstream events as-is
               if (obj.event === "process") {
                 writeEvent(obj);
               } else if (obj.event === "token") {
@@ -189,8 +249,16 @@ export const addMessageAndStreamResponse = async (
                 if (typeof obj.text === "string") {
                   aiText += obj.text;
                 }
+              } else if (obj.event === "chart_data") {
+                try {
+                  if (obj.chart) {
+                    chartEvents.push(obj.chart);
+                  } else if (obj.data && obj.type) {
+                    chartEvents.push({ ...obj });
+                  }
+                } catch {}
+                writeEvent(obj);
               } else if (obj.event === "end") {
-                // Defer sending end until after sources (if any)
                 sawEndEvent = true;
                 endEventObject = obj;
                 try {
@@ -203,7 +271,7 @@ export const addMessageAndStreamResponse = async (
               }
             }
           } catch (_e) {
-            // ignore bad line
+            // ignore non-JSON lines
           }
         }
         if (stopEarly) break;
@@ -238,19 +306,21 @@ export const addMessageAndStreamResponse = async (
         res.end();
       }
       clearInterval(heartbeat);
-      if (chatIdToUse && aiText) {
+      if (chatIdToUse && (aiText || chartEvents.length)) {
         (async () => {
           try {
             const aiMsg: InsertMessage = {
               chatId: chatIdToUse as string,
               userId,
-              content: aiText,
+              content: aiText || "",
               isAi: true,
               isWhatsapp: false,
               isTelegram: false,
               aiTokensUsed: null as any,
               aiCost: null as any,
-              aiChartData: null as any,
+              aiChartData: (chartEvents && chartEvents.length
+                ? (chartEvents as any)
+                : (null as any)) as any,
               aiResponseSources: sourcesCollected as any,
             } as InsertMessage;
             await createMessage(aiMsg);
