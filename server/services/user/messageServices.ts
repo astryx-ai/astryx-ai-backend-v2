@@ -40,7 +40,6 @@ export const addMessageToChat = async (messageData: InsertMessage) => {
         messageData.chatId
       );
 
-      console.log("i ai result is here", aiResult);
       if (!aiResult.success) {
         return {
           data: null,

@@ -36,7 +36,7 @@ export const ControllerHelper = async <T>({
   try {
     Utils.logInfo({
       message: `${logMessage} API received for ${scope}`,
-      data: JSON.stringify({ validationData }),
+      data: JSON.stringify({ validationData }, null, 2),
     });
     const parsedData = validationSchema.safeParse(validationData);
 
@@ -58,7 +58,10 @@ export const ControllerHelper = async <T>({
       return onError(res, error, message);
     }
 
-    Utils.logInfo({ message: "Success", data: JSON.stringify({ data }) });
+    Utils.logInfo({
+      message: "Success",
+      data: JSON.stringify({ data }, null, 2),
+    });
     if (data?.shouldRedirect) {
       return ResponseHelper.redirect(res, data);
     } else {
@@ -91,7 +94,10 @@ export const ParameterLessControllerHelper = async ({
       return ResponseHelper.badRequest(res, error, message);
     }
 
-    Utils.logInfo({ message: "Success", data: JSON.stringify({ data }) });
+    Utils.logInfo({
+      message: "Success",
+      data: JSON.stringify({ data }, null, 2),
+    });
     return ResponseHelper.success(res, data, message);
   } catch (error: any) {
     Utils.logError({

@@ -63,6 +63,20 @@ export const updateMessage = async (
   return updatedMessage[0] || null;
 };
 
+// Update message embedding (background safe)
+export const updateMessageEmbedding = async (
+  messageId: string,
+  userId: string,
+  embedding: number[]
+) => {
+  const updated = await db
+    .update(messages)
+    .set({ embedding, updatedAt: sql`now()` })
+    .where(and(eq(messages.id, messageId), eq(messages.userId, userId)))
+    .returning();
+  return updated[0] || null;
+};
+
 // Delete message
 export const deleteMessage = async (messageId: string, userId: string) => {
   const deletedMessage = await db

@@ -36,6 +36,45 @@ type SourceMeta = {
   ogImageUrl: string | null;
 };
 
+// Decode common HTML entities in plain text
+const decodeHtmlEntities = (text: string): string => {
+  return text
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/g, "'");
+};
+
+// Best-effort decode of percent-encoded strings that look like URLs or query-encoded text
+const decodePercentEncodingIfLikely = (text: string): string => {
+  if (!text || !/%[0-9A-Fa-f]{2}/.test(text)) return text;
+  const percentMatches = text.match(/%[0-9A-Fa-f]{2}/g) || [];
+  const looksEncodedUrl =
+    /^https?%3A/i.test(text) || /%2F/i.test(text) || percentMatches.length >= 2;
+  if (!looksEncodedUrl) return text;
+  const candidate = text.replace(/\+/g, " ");
+  try {
+    return decodeURIComponent(candidate);
+  } catch (e) {
+    try {
+      return decodeURI(candidate);
+    } catch {
+      return text;
+    }
+  }
+};
+
+// Clean up extracted titles that may be HTML-escaped or percent-encoded
+const sanitizeTitle = (raw: string): string => {
+  if (!raw) return raw;
+  let t = raw.trim();
+  t = decodeHtmlEntities(t);
+  t = decodePercentEncodingIfLikely(t);
+  t = t.replace(/\s+/g, " ").trim();
+  return t;
+};
+
 // Fetch metadata from a URL: tries OpenGraph/Twitter cards and falls back to <title>
 export const fetchSourceMeta = async (url: string): Promise<SourceMeta> => {
   try {
@@ -110,8 +149,9 @@ export const fetchSourceMeta = async (url: string): Promise<SourceMeta> => {
     const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
     const ogTitle = extractMetaContent(html, "og:title", true);
     const twTitle = extractMetaContent(html, "twitter:title", false);
-    const title =
+    const rawTitle =
       ogTitle || twTitle || (titleMatch && titleMatch[1].trim()) || url;
+    const title = sanitizeTitle(rawTitle);
 
     // Image extraction with multiple fallbacks
     let rawImage =

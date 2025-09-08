@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-// Switching to HTTP streaming from Python microservice
 import { ENV } from "../config/env";
 import { createMessage } from "../db/queries/messages";
+import { updateMessageEmbedding } from "../db/queries/messages";
 import { createNewChat } from "../services/user/chatServices";
 import { extractUrls, fetchSourceMeta } from "../utils/helper";
 import { InsertMessage } from "../db/schema";
@@ -96,7 +96,27 @@ export const addMessageAndStreamResponse = async (
           isWhatsapp: false,
           isTelegram: false,
         } as InsertMessage;
-        await createMessage(userMsg);
+        const created = await createMessage(userMsg);
+        // Generate and persist embedding in background for the user message
+        try {
+          const { embeddingService } = await import(
+            "../services/ai/embeddingService"
+          );
+          const embedding = await embeddingService.generateEmbedding(query);
+          if (created?.id) {
+            await updateMessageEmbedding(
+              created.id as string,
+              userId,
+              embedding
+            );
+          }
+        } catch (embedErr) {
+          // eslint-disable-next-line no-console
+          console.error(
+            "[SSE] failed to generate/store user embedding:",
+            embedErr
+          );
+        }
       } catch (e) {
         // eslint-disable-next-line no-console
         console.error("[SSE] failed to persist user message:", e);
@@ -323,7 +343,29 @@ export const addMessageAndStreamResponse = async (
                 : (null as any)) as any,
               aiResponseSources: sourcesCollected as any,
             } as InsertMessage;
-            await createMessage(aiMsg);
+            const createdAi = await createMessage(aiMsg);
+            // Generate and persist embedding in background for the AI message
+            try {
+              const { embeddingService } = await import(
+                "../services/ai/embeddingService"
+              );
+              if (aiText && aiText.trim() && createdAi?.id) {
+                const embedding = await embeddingService.generateEmbedding(
+                  aiText
+                );
+                await updateMessageEmbedding(
+                  createdAi.id as string,
+                  userId,
+                  embedding
+                );
+              }
+            } catch (embedErr) {
+              // eslint-disable-next-line no-console
+              console.error(
+                "[SSE] failed to generate/store AI embedding:",
+                embedErr
+              );
+            }
           } catch (e) {
             // eslint-disable-next-line no-console
             console.error("[SSE] failed to persist AI message:", e);

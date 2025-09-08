@@ -66,7 +66,7 @@ export const messages = pgTable("messages", {
   aiCost: numeric("ai_cost", { precision: 10, scale: 6 }),
   aiChartData: jsonb("ai_chart_data"),
   aiResponseSources: jsonb("ai_response_sources"),
-  embedding: vector("embedding", { dimensions: 1536 }), // Using text-embedding-3-small default dimensions
+  embedding: vector("embedding", { dimensions: 1536 }),
 });
 
 /**
