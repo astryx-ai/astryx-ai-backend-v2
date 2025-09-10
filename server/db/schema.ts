@@ -176,6 +176,18 @@ export const newsDocuments = pgTable(
   })
 );
 
+/**
+ * ## Invite Codes Table
+ * Stores one-time or limited-use invite codes.
+ */
+export const inviteCodes = pgTable("invite_codes", {
+  code: text("code").primaryKey(),
+  maxUses: integer("max_uses").default(1),
+  usedCount: integer("used_count").default(0),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
 // --- Zod Schemas for Validation and Type Inference ---
 
 // Chats
@@ -213,3 +225,9 @@ export const insertStockPriceSchema = createInsertSchema(stockPrices);
 export const selectStockPriceSchema = createSelectSchema(stockPrices);
 export type InsertStockPrice = z.infer<typeof insertStockPriceSchema>;
 export type SelectStockPrice = z.infer<typeof selectStockPriceSchema>;
+
+// Invite Codes
+export const insertInviteCodeSchema = createInsertSchema(inviteCodes);
+export const selectInviteCodeSchema = createSelectSchema(inviteCodes);
+export type InsertInviteCode = z.infer<typeof insertInviteCodeSchema>;
+export type SelectInviteCode = z.infer<typeof selectInviteCodeSchema>;

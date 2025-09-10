@@ -4,6 +4,7 @@ const router = express.Router();
 import * as userController from "../controllers/user";
 import chatRoutes from "./chat";
 import messageRoutes from "./message";
+import inviteRoutes from "./invite";
 
 // User profile routes
 router.get("/me", userController.getUserProfileController);
@@ -14,5 +15,8 @@ router.use("/chats", chatRoutes);
 
 // Message routes (REST + stream)
 router.use("/", messageRoutes);
+
+// Invite routes (temporary)
+router.use("/invite", inviteRoutes);
 
 export default router;

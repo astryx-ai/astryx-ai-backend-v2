@@ -9,6 +9,12 @@ import {
   InsertMessage,
   SelectMessage,
 } from "./schema";
+import {
+  insertInviteCodeSchema,
+  selectInviteCodeSchema,
+  InsertInviteCode,
+  SelectInviteCode,
+} from "./schema";
 
 export const updateChatSchema = z.object({
   title: z.string().min(1).max(255).optional(),
@@ -55,6 +61,9 @@ export {
   selectChatSchema,
   insertMessageSchema,
   selectMessageSchema,
+  insertInviteCodeSchema,
+  selectInviteCodeSchema,
 };
 
 export type { InsertChat, SelectChat, InsertMessage, SelectMessage };
+export type { InsertInviteCode, SelectInviteCode };
