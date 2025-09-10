@@ -6,7 +6,16 @@ import { InsertMessage } from "../schema";
 // Get messages by chat ID
 export const getMessagesByChatId = async (chatId: string) => {
   return await db
-    .select()
+    .select({
+      id: messages.id,
+      chatId: messages.chatId,
+      content: messages.content,
+      createdAt: messages.createdAt,
+      updatedAt: messages.updatedAt,
+      isAi: messages.isAi,
+      aiChartData: messages.aiChartData,
+      aiResponseSources: messages.aiResponseSources,
+    })
     .from(messages)
     .where(eq(messages.chatId, chatId))
     .orderBy(desc(messages.createdAt));

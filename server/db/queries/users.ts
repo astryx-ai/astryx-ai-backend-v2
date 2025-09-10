@@ -3,24 +3,6 @@ import { db } from "../index";
 import { users } from "../schema";
 
 /**
- * Helper function to extract Telegram User ID from user metadata
- */
-export const extractTelegramUserId = (user: any): string | null => {
-  if (!user?.rawUserMetaData) return null;
-
-  try {
-    const metadata =
-      typeof user.rawUserMetaData === "string"
-        ? JSON.parse(user.rawUserMetaData)
-        : user.rawUserMetaData;
-    return metadata?.telegram_user_id || null;
-  } catch (error) {
-    console.error("Error parsing user metadata:", error);
-    return null;
-  }
-};
-
-/**
  * Get user by ID from auth.users table
  */
 export const getUserById = async (userId: string) => {
@@ -68,62 +50,6 @@ export const getUserByPhone = async (phoneNumber: string) => {
     return user[0] || null;
   } catch (error) {
     console.error("Error fetching user by phone:", error);
-    throw error;
-  }
-};
-
-/**
- * Get user by Telegram User ID from auth.users table (stored in metadata)
- */
-export const getUserByTelegramUserId = async (telegramUserId: string) => {
-  try {
-    const user = await db
-      .select({
-        id: users.id,
-        email: users.email,
-        phone: users.phone,
-        createdAt: users.createdAt,
-        lastSignInAt: users.lastSignInAt,
-        rawUserMetaData: users.rawUserMetaData,
-        rawAppMetaData: users.rawAppMetaData,
-      })
-      .from(users)
-      .where(
-        sql`${users.rawUserMetaData}->>'telegram_user_id' = ${telegramUserId}`
-      )
-      .limit(1);
-
-    return user[0] || null;
-  } catch (error) {
-    console.error("Error fetching user by Telegram User ID:", error);
-    throw error;
-  }
-};
-
-/**
- * Check if user exists by Telegram User ID and has email
- */
-export const checkUserExistsByTelegramUserIdWithEmail = async (
-  telegramUserId: string
-) => {
-  try {
-    const user = await getUserByTelegramUserId(telegramUserId);
-
-    // Extract telegram user ID from metadata to verify
-    const extractedTelegramUserId = extractTelegramUserId(user);
-
-    return {
-      exists: !!user,
-      hasEmail: !!user?.email,
-      user: user
-        ? {
-            ...user,
-            telegramUserId: extractedTelegramUserId,
-          }
-        : null,
-    };
-  } catch (error) {
-    console.error("Error checking user existence by Telegram User ID:", error);
     throw error;
   }
 };

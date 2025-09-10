@@ -24,7 +24,6 @@ export const getUserProfile = async (userId: string) => {
 
     return {
       data: {
-        id: user.id,
         email: user.email,
         phone: user.phone,
         displayName: displayName,

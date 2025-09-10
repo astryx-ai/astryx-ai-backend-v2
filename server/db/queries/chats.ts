@@ -21,24 +21,6 @@ export const getChatById = async (chatId: string, userId: string) => {
   return chat[0]; // Return the first result or undefined
 };
 
-// Get WhatsApp chat for a user (assuming one WhatsApp chat per user)
-export const getWhatsAppChatByUserId = async (userId: string) => {
-  const result = await db
-    .select()
-    .from(chats)
-    .where(and(eq(chats.userId, userId), eq(chats.isWhatsapp, true)));
-  return result[0];
-};
-
-// Get Telegram chat for a user (assuming one Telegram chat per user)
-export const getTelegramChatByUserId = async (userId: string) => {
-  const result = await db
-    .select()
-    .from(chats)
-    .where(and(eq(chats.userId, userId), eq(chats.isTelegram, true)));
-  return result[0];
-};
-
 // Create new chat
 export const createChat = async (chatData: InsertChat) => {
   const newChat = await db.insert(chats).values(chatData).returning();

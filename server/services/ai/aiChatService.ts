@@ -22,7 +22,7 @@ export class AIChatService {
   private static readonly CHAT_INVOKE_ENDPOINT = "/chat/message";
 
   /**
-   * Send a query to the AI microservice and get WhatsApp-formatted response
+   * Send a query to the AI microservice and get response
    */
   static async processUserQuery(
     userId: string,

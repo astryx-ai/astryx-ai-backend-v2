@@ -38,8 +38,6 @@ export const chats = pgTable("chats", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
-  isWhatsapp: boolean("is_whatsapp").notNull().default(false),
-  isTelegram: boolean("is_telegram").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -58,8 +56,6 @@ export const messages = pgTable("messages", {
     .references(() => users.id, { onDelete: "cascade" }),
   content: text("content").notNull(),
   isAi: boolean("is_ai").notNull(),
-  isWhatsapp: boolean("is_whatsapp").notNull().default(false),
-  isTelegram: boolean("is_telegram").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
   aiTokensUsed: integer("ai_tokens_used"),

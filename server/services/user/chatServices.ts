@@ -4,7 +4,6 @@ import {
   createChat,
   deleteChat,
   updateChatTitle,
-  getTelegramChatByUserId,
 } from "../../db/queries/chats";
 import { InsertChat } from "../../db/schema";
 
@@ -39,41 +38,6 @@ export const createNewChat = async (chatData: InsertChat) => {
     return { data: newChat, message: "Chat created successfully", error: null };
   } catch (error) {
     return { data: null, message: "Failed to create chat", error };
-  }
-};
-
-export const createTelegramChat = async (
-  userId: string,
-  title: string = "Telegram Chat"
-) => {
-  try {
-    const chatData: InsertChat = {
-      userId,
-      title,
-      isWhatsapp: false,
-      isTelegram: true,
-    };
-    const newChat = await createChat(chatData);
-    return {
-      data: newChat,
-      message: "Telegram chat created successfully",
-      error: null,
-    };
-  } catch (error) {
-    return { data: null, message: "Failed to create Telegram chat", error };
-  }
-};
-
-export const getTelegramChat = async (userId: string) => {
-  try {
-    const chat = await getTelegramChatByUserId(userId);
-    return {
-      data: chat || null,
-      message: "Telegram chat retrieved successfully",
-      error: null,
-    };
-  } catch (error) {
-    return { data: null, message: "Failed to retrieve Telegram chat", error };
   }
 };
 

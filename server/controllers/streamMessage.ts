@@ -93,8 +93,6 @@ export const addMessageAndStreamResponse = async (
           userId,
           content: query,
           isAi: false,
-          isWhatsapp: false,
-          isTelegram: false,
         } as InsertMessage;
         const created = await createMessage(userMsg);
         // Generate and persist embedding in background for the user message
@@ -334,8 +332,6 @@ export const addMessageAndStreamResponse = async (
               userId,
               content: aiText || "",
               isAi: true,
-              isWhatsapp: false,
-              isTelegram: false,
               aiTokensUsed: null as any,
               aiCost: null as any,
               aiChartData: (chartEvents && chartEvents.length

@@ -25,8 +25,11 @@ const uuidParamSchema = z.object({
   id: z.string().uuid(),
 });
 
-export const getChatMessagesController: RequestHandler = async (req, res) => {
-  const userId = (req as AuthenticatedRequest).user?.id as string;
+export const getChatMessagesController: RequestHandler = async (
+  req: AuthenticatedRequest,
+  res
+) => {
+  const userId = req.user?.id as string;
   const chatId = req.params.chatId;
 
   await ParameterLessControllerHelper({
@@ -37,9 +40,13 @@ export const getChatMessagesController: RequestHandler = async (req, res) => {
   });
 };
 
-export const addMessageController: RequestHandler = async (req, res, next) => {
+export const addMessageController: RequestHandler = async (
+  req: AuthenticatedRequest,
+  res,
+  next
+) => {
   try {
-    const userId = (req as AuthenticatedRequest).user?.id as string;
+    const userId = req.user?.id as string;
     const chatId = req.params.chatId;
 
     const chatIdValidation = chatIdParamSchema.safeParse({ chatId });
@@ -62,8 +69,11 @@ export const addMessageController: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const updateMessageController: RequestHandler = async (req, res) => {
-  const userId = (req as AuthenticatedRequest).user?.id as string;
+export const updateMessageController: RequestHandler = async (
+  req: AuthenticatedRequest,
+  res
+) => {
+  const userId = req.user?.id as string;
   const messageId = req.params.messageId;
 
   const messageIdValidation = uuidParamSchema.safeParse({ id: messageId });
